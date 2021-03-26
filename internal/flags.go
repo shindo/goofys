@@ -243,6 +243,12 @@ func NewApp() (app *cli.App) {
 				Usage: "Set the timeout on HTTP requests to S3",
 			},
 
+			cli.IntFlag{
+				Name:  "read-concurrency",
+				Value: 0,
+				Usage: "Maximum concurrent read operations (default: 0)",
+			},
+
 			/////////////////////////
 			// Debugging
 			/////////////////////////
@@ -275,7 +281,7 @@ func NewApp() (app *cli.App) {
 		flagCategories[f] = "aws"
 	}
 
-	for _, f := range []string{"cheap", "no-implicit-dir", "stat-cache-ttl", "type-cache-ttl", "http-timeout"} {
+	for _, f := range []string{"cheap", "no-implicit-dir", "stat-cache-ttl", "type-cache-ttl", "http-timeout", "read-concurrency"} {
 		flagCategories[f] = "tuning"
 	}
 
@@ -327,11 +333,12 @@ func PopulateFlags(c *cli.Context) (ret *FlagStorage) {
 		Gid:          uint32(c.Int("gid")),
 
 		// Tuning,
-		Cheap:        c.Bool("cheap"),
-		ExplicitDir:  c.Bool("no-implicit-dir"),
-		StatCacheTTL: c.Duration("stat-cache-ttl"),
-		TypeCacheTTL: c.Duration("type-cache-ttl"),
-		HTTPTimeout:  c.Duration("http-timeout"),
+		Cheap:           c.Bool("cheap"),
+		ExplicitDir:     c.Bool("no-implicit-dir"),
+		StatCacheTTL:    c.Duration("stat-cache-ttl"),
+		TypeCacheTTL:    c.Duration("type-cache-ttl"),
+		HTTPTimeout:     c.Duration("http-timeout"),
+		ReadConcurrency: uint32(c.Int("read-concurrency")),
 
 		// Common Backend Config
 		Endpoint:       c.String("endpoint"),

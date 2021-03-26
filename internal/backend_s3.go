@@ -49,6 +49,8 @@ type S3Backend struct {
 	aws      bool
 	gcs      bool
 	v2Signer bool
+
+	readSem semaphore
 }
 
 func NewS3(bucket string, flags *FlagStorage, config *S3Config) (*S3Backend, error) {
@@ -69,6 +71,10 @@ func NewS3(bucket string, flags *FlagStorage, config *S3Config) (*S3Backend, err
 
 	if flags.DebugS3 {
 		awsConfig.LogLevel = aws.LogLevel(aws.LogDebug | aws.LogDebugWithRequestErrors)
+	}
+
+	if flags.ReadConcurrency > 0 {
+		s.readSem = make(semaphore, flags.ReadConcurrency)
 	}
 
 	if config.UseKMS {
@@ -733,6 +739,11 @@ func (s *S3Backend) GetBlob(param *GetBlobInput) (*GetBlobOutput, error) {
 		get.Range = &bytes
 	}
 	// TODO handle IfMatch
+
+	if s.readSem != nil {
+		s.readSem.P(1)
+		defer s.readSem.V(1)
+	}
 
 	req, resp := s.GetObjectRequest(&get)
 	err := req.Send()
